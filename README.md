@@ -118,6 +118,10 @@ Run all commands from the **repository root** (Snakemake auto-discovers
 `workflow/Snakefile`):
 
 ```bash
+# clone the repository
+git clone https://github.com/seupark/Ps_stratified.git
+cd Ps_stratified
+
 # one-time: create the pinned environment
 conda env create -f workflow/envs/environment.yaml
 conda activate ps_stratified
