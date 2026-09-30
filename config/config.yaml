@@ -1,0 +1,38 @@
+# ===========================================================================
+# Ps_stratified pipeline configuration
+# ===========================================================================
+
+# --- paths ---
+# Paths are resolved relative to the directory Snakemake is run from (the repo root).
+# Edit mcool_dir and the tss_beds paths.
+mcool_dir:   resources/mcool_files
+results_dir: results
+
+# One or more TSS/PTU boundary BEDs. 
+# Each key is a short tag used to namespace outputs.
+# the pipeline builds a full result set per entry in one run.
+tss_beds:
+  chr11_sTSS1_sTSS4: resources/bed_files/Tb427_chr11_sTSS1_sTSS4.bed
+  chr1: resources/bed_files/Tb427_chr1.bed
+
+
+# --- analysis parameters ---
+resolutions: [1000, 2000, 5000]   # must exist in the .mcool zoom levels
+extend: 2000            # 0 = raw TSS boundaries; >0 = clamped (overlap-free) extension in bp
+min_regions: 3       # drop chromosomes with fewer inter-TSS regions than this
+max_group: 2         # number of explicit boundary-crossing groups: 
+                     #   0..N kept, farther separations collapse into ">N". 
+                     #   If the data never reaches N, no ">N" bucket appears (cap falls back to the largest separation present).
+                     #   Set to null for no collapse (one group per separation).
+ref_group: "0"       # fold-change reference (within-region contacts)
+
+# --- experimental design: condition -> {replicate_sample: mcool_filename} ---
+# mcool_filename is relative to mcool_dir. 
+# Naming is intentionally explicit because the files may not be named uniformly.
+conditions:
+  Control:
+    Control_rep1: Control2_rep1_sim.mcool
+    Control_rep2: Control2_rep2_sim.mcool
+  2T1-T7:
+    2T1-T7_rep1: 2T1-T7_rep1_sim.mcool
+    2T1-T7_rep2: 2T1-T7_rep2_sim.mcool

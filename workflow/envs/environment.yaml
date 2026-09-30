@@ -1,0 +1,14 @@
+
+name: ps_stratified
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - snakemake-minimal=7.32.4
+  - cooler=0.10.4
+  - pandas=2.3.2
+  - numpy=1.26.4
+  - matplotlib-base=3.10.8
+  - seaborn=0.13.2
+  - pyyaml

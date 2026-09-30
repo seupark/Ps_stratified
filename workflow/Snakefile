@@ -1,0 +1,152 @@
+
+import os
+import re
+
+configfile: "config/config.yaml"
+
+MCOOL_DIR    = config["mcool_dir"]
+RES_DIR      = config["results_dir"]
+RESOLUTIONS  = [str(r) for r in config["resolutions"]]
+MODULES_DIR  = workflow.basedir          # modules.py sits next to this Snakefile
+
+# TSS BEDs as {tag: bedpath}; the tag namespaces every output. 
+# Falls back to the single `tss_bed` key if a config still uses it.
+TSS_BEDS = config.get("tss_beds") or {
+    os.path.splitext(os.path.basename(config["tss_bed"]))[0]: config["tss_bed"]
+}
+TSS_TAGS = list(TSS_BEDS)
+
+# build sample <-> condition maps from the config design
+SAMPLE_TO_MCOOL = {}
+SAMPLE_TO_COND  = {}
+COND_TO_SAMPLES = {}
+for _cond, _reps in config["conditions"].items():
+    COND_TO_SAMPLES[_cond] = list(_reps.keys())
+    for _sample, _mcool in _reps.items():
+        SAMPLE_TO_MCOOL[_sample] = os.path.join(MCOOL_DIR, _mcool)
+        SAMPLE_TO_COND[_sample]  = _cond
+
+SAMPLES    = list(SAMPLE_TO_MCOOL)
+CONDITIONS = list(COND_TO_SAMPLES)
+
+wildcard_constraints:
+    res       = r"\d+",
+    sample    = "|".join(re.escape(s) for s in SAMPLES),
+    condition = "|".join(re.escape(c) for c in CONDITIONS),
+    tss       = "|".join(re.escape(t) for t in TSS_TAGS),
+
+
+rule all:
+    input:
+        expand(os.path.join(RES_DIR, "plots/per_condition_{tss}.svg"),     tss=TSS_TAGS),
+        expand(os.path.join(RES_DIR, "plots/overlay_fc_{tss}.svg"), tss=TSS_TAGS),
+        expand(os.path.join(RES_DIR, "plots/overlay_ps_{tss}.svg"),         tss=TSS_TAGS),
+
+
+# TSS boundaries -> inter-TSS regions (JSON)
+rule regions:
+    input:
+        tss_bed = lambda wc: TSS_BEDS[wc.tss],
+    output:
+        regions = os.path.join(RES_DIR, "regions/{tss}/regions.json"),
+    params:
+        modules_dir = MODULES_DIR,
+        extend_len  = config.get("extend", 0),
+        min_regions = config.get("min_regions", 3),
+    script:
+        "scripts/make_regions.py"
+
+
+rule curve:
+    input:
+        mcool   = lambda wc: SAMPLE_TO_MCOOL[wc.sample],
+        regions = os.path.join(RES_DIR, "regions/{tss}/regions.json"),
+    output:
+        curve = os.path.join(RES_DIR, "curves/{tss}/{sample}_{res}.curve.tsv"),
+    params:
+        modules_dir = MODULES_DIR,
+        max_group   = config.get("max_group", 5),
+    threads: 1
+    script:
+        "scripts/replicate_curve.py"
+
+
+# replicates of one condition -> replicate mean/SE + log2FC
+rule combine:
+    input:
+        curves = lambda wc: expand(
+            os.path.join(RES_DIR, "curves/{tss}/{sample}_{res}.curve.tsv"),
+            tss=wc.tss, sample=COND_TO_SAMPLES[wc.condition], res=wc.res),
+    output:
+        combined = os.path.join(RES_DIR, "combined/{tss}/{condition}_{res}.combined.tsv"),
+        fc       = os.path.join(RES_DIR, "combined/{tss}/{condition}_{res}.fc.tsv"),
+    params:
+        modules_dir = MODULES_DIR,
+        ref_group   = config.get("ref_group", "0"),
+    script:
+        "scripts/combine_condition.py"
+
+
+# shared y-axis limits: pooled over every TSS set so the per-TSS figures of each type render on one common y-range
+rule axis_limits:
+    input:
+        combined = expand(
+            os.path.join(RES_DIR, "combined/{tss}/{condition}_{res}.combined.tsv"),
+            tss=TSS_TAGS, condition=CONDITIONS, res=RESOLUTIONS),
+        fc = expand(
+            os.path.join(RES_DIR, "combined/{tss}/{condition}_{res}.fc.tsv"),
+            tss=TSS_TAGS, condition=CONDITIONS, res=RESOLUTIONS),
+    output:
+        limits = os.path.join(RES_DIR, "plots/axis_limits.json"),
+    params:
+        modules_dir = MODULES_DIR,
+    script:
+        "scripts/axis_limits.py"
+
+
+# rows=condition, cols=resolution
+rule plot_per_condition:
+    input:
+        combined = lambda wc: expand(
+            os.path.join(RES_DIR, "combined/{tss}/{condition}_{res}.combined.tsv"),
+            tss=wc.tss, condition=CONDITIONS, res=RESOLUTIONS),
+        fc = lambda wc: expand(
+            os.path.join(RES_DIR, "combined/{tss}/{condition}_{res}.fc.tsv"),
+            tss=wc.tss, condition=CONDITIONS, res=RESOLUTIONS),
+        limits = os.path.join(RES_DIR, "plots/axis_limits.json"),
+    output:
+        svg = os.path.join(RES_DIR, "plots/per_condition_{tss}.svg"),
+    params:
+        modules_dir = MODULES_DIR,
+    script:
+        "scripts/plot_per_condition.py"
+
+
+# log2FC with conditions overlaid, faceted by boundary group
+rule plot_overlay_fc:
+    input:
+        fc = lambda wc: expand(
+            os.path.join(RES_DIR, "combined/{tss}/{condition}_{res}.fc.tsv"),
+            tss=wc.tss, condition=CONDITIONS, res=RESOLUTIONS),
+        limits = os.path.join(RES_DIR, "plots/axis_limits.json"),
+    output:
+        svg = os.path.join(RES_DIR, "plots/overlay_fc_{tss}.svg"),
+    params:
+        modules_dir = MODULES_DIR,
+    script:
+        "scripts/plot_overlay_fc.py"
+
+
+# balanced-mean P(s) with conditions overlaid and boundary groups distinguished by line style
+rule plot_overlay_ps:
+    input:
+        combined = lambda wc: expand(
+            os.path.join(RES_DIR, "combined/{tss}/{condition}_{res}.combined.tsv"),
+            tss=wc.tss, condition=CONDITIONS, res=RESOLUTIONS),
+        limits = os.path.join(RES_DIR, "plots/axis_limits.json"),
+    output:
+        svg = os.path.join(RES_DIR, "plots/overlay_ps_{tss}.svg"),
+    params:
+        modules_dir = MODULES_DIR,
+    script:
+        "scripts/plot_overlay_ps.py"
