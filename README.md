@@ -137,6 +137,28 @@ Targets (`rule all`) — three SVG figures per TSS-set tag (`{tss}`):
 
 ---
 
+## Example outputs
+
+Figures below are from the `chr11_sTSS1_sTSS4` TSS set (two conditions,
+two biological replicates each).
+
+**Per-condition P(s)** — rows = condition, cols = resolution; boundary groups
+overlaid within each panel.
+
+![Per-condition P(s)](docs/per_condition_chr11_sTSS1_sTSS4.svg)
+
+**Overlaid P(s)** — balanced-mean P(s) with conditions overlaid, boundary groups
+distinguished by line style.
+
+![Overlaid P(s)](docs/overlay_ps_chr11_sTSS1_sTSS4.svg)
+
+**Overlaid log2 fold change** — log2 fold change with conditions overlaid,
+faceted by boundary group.
+
+![Overlaid log2 fold change](docs/overlay_fc_chr11_sTSS1_sTSS4.svg)
+
+---
+
 ## References
 
 1. Rabuffo, C., Schmidt, M. R., Yadav, P., Tong, P., Carloni, R., Barcons-Simon, A., Cosentino, R. O., Krebs, S., Matthews, K. R., Allshire, R. C., & Siegel, T. N. (2024). Inter-chromosomal transcription hubs shape the 3D genome architecture of African trypanosomes. *Nature Communications*, *15*, Article 10323. https://doi.org/10.1038/s41467-024-55285-9
