@@ -15,9 +15,8 @@ def _load(paths):
         ignore_index=True,
     )
 
-
-# Pool every TSS set so the limits are global; per-TSS figures then render on a
-# shared y-axis (one range per figure type).
+# Pool every set so the limits are global; 
+# per-TSS BED figures then render on a shared y-axis (one range per figure type).
 combined = _load(snakemake.input.combined)
 fc = _load(snakemake.input.fc)
 

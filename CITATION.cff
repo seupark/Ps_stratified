@@ -1,35 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software or method, please cite the original paper."
-preferred-citation:
-  type: article
-  authors:
-    - family-names: "Rabuffo"
-      given-names: "Claudia"
-    - family-names: "Schmidt"
-      given-names: "Markus R."
-    - family-names: "Yadav"
-      given-names: "Prateek"
-    - family-names: "Tong"
-      given-names: "Pin"
-    - family-names: "Carloni"
-      given-names: "Roberta"
-    - family-names: "Barcons-Simon"
-      given-names: "Anna"
-    - family-names: "Cosentino"
-      given-names: "Raúl O."
-    - family-names: "Krebs"
-      given-names: "Stefan"
-    - family-names: "Matthews"
-      given-names: "Keith R."
-    - family-names: "Allshire"
-      given-names: "Robin C."
-    - family-names: "Siegel"
-      given-names: "T. Nicolai"
-  title: "Inter-chromosomal transcription hubs shape the 3D genome architecture of African trypanosomes"
-  journal: "Nature Communications"
-  volume: 15
-  year: 2024
-  doi: "10.1038/s41467-024-55285-9"
+
 references:
   - type: article
     authors:

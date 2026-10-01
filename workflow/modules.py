@@ -56,18 +56,18 @@ def extend_tss_clamped(input_file, extension_len, output_file=None):
             
 def create_range_dict(input_bed, min_regions=3):
 
-    # Collect boundary intervals per chromosome
-    boundaries = defaultdict(list)
+    # Collect TSS intervals per chromosome
+    tss_intervals = defaultdict(list)
     with open(input_bed, 'r') as f:
         for row in csv.reader(f, delimiter='\t'):
             if len(row) < 3 or row[0].startswith('#'):
                 continue
-            boundaries[row[0]].append((int(row[1]), int(row[2])))
+            tss_intervals[row[0]].append((int(row[1]), int(row[2])))
 
     range_dict = {}
-    for chrom, feats in boundaries.items():
+    for chrom, feats in tss_intervals.items():
         feats.sort()  # order by start (then end)
-        # Spans strictly between consecutive boundaries
+        # Spans strictly between consecutive TSSs
         regions = [
             [prev_end, next_start]
             for (_, prev_end), (next_start, _) in zip(feats, feats[1:])
@@ -391,8 +391,9 @@ def plot_per_condition(combined_df, fc_df, output_name, Z=1.0,
     if fc_ylim is not None:
         fc_axes[0].set_ylim(*fc_ylim)
 
-    fig.suptitle("P(s) and FC per condition",
-                 fontsize=10)
+    fig.suptitle("Contact frequency and log2 FC\n" \
+                    "as a function of genomic distance per condition",
+                 fontsize=12)
     plt.tight_layout(rect=[0, 0, 0.92, 0.96])
 
     for r_idx, cond in enumerate(conditions):
@@ -406,7 +407,7 @@ def plot_per_condition(combined_df, fc_df, output_name, Z=1.0,
         # the log2FC panel) is included
         handles, labels = axes[r_idx * 2][0].get_legend_handles_labels()
         right_edge = axes[r_idx * 2][n_cols - 1].get_position().x1
-        fig.legend(handles, labels, title="boundaries\ncrossed", loc="center left",
+        fig.legend(handles, labels, title="TSS\ncrossed", loc="center left",
                    bbox_to_anchor=(right_edge + 0.01, y_center), fontsize=8,
                    title_fontsize=8, frameon=True)
 
@@ -497,7 +498,7 @@ def plot_overlay_ps(combined_df, output_name, Z=1.0, show_se=True, ylim=None):
     leg_kw = dict(fontsize=8, title_fontsize=8, frameon=True, handlelength=1.2)
     leg1 = fig.legend(cond_handles, conditions, title="condition", loc="lower left",
                       bbox_to_anchor=(1.0, 0.51), **leg_kw)
-    leg2 = fig.legend(grp_handles, [str(g) for g in groups], title="boundaries\ncrossed",
+    leg2 = fig.legend(grp_handles, [str(g) for g in groups], title="TSS\ncrossed",
                       loc="upper left", bbox_to_anchor=(1.0, 0.49), **leg_kw)
     fig.canvas.draw()
     r = fig.canvas.get_renderer()
@@ -508,11 +509,12 @@ def plot_overlay_ps(combined_df, output_name, Z=1.0, show_se=True, ylim=None):
     leg1 = fig.legend(cond_handles, conditions, title="condition", loc="lower left",
                       bbox_to_anchor=(1.0, 0.51, width, 0.0), mode="expand", **leg_kw)
     fig.add_artist(leg1)
-    leg2 = fig.legend(grp_handles, [str(g) for g in groups], title="boundaries\ncrossed",
+    leg2 = fig.legend(grp_handles, [str(g) for g in groups], title="TSS\ncrossed",
                       loc="upper left", bbox_to_anchor=(1.0, 0.49, width, 0.0), mode="expand", **leg_kw)
     leg2.set_alignment("center")  # center the title within the expanded box
-    fig.suptitle("P(s) stratified by TSS-boundary separation",
-                 fontsize=10, y=0.99)
+    fig.suptitle("Contact frequency as a function of genomic distance\n" \
+                    "stratified by the number of TSS separating each locus pair",
+                 fontsize=12, y=0.99)
     plt.tight_layout(rect=[0, 0, 1.0, 0.93])
     # plt.savefig(f"{output_name}.png", dpi=300, bbox_inches="tight")  # PNG disabled: SVG only
     plt.savefig(f"{output_name}.svg", bbox_inches="tight")
@@ -552,7 +554,7 @@ def plot_overlay_fc(fc_df, output_name, Z=1.0, ylim=None):
             ax.axhline(0, color="black", linewidth=0.8, linestyle="--")
             _style_log_x(ax, dense_ticks=True)
             if c_idx == 0:
-                ax.set_ylabel(f"log2 FC\nboundaries crossed = {grp}", fontsize=8)
+                ax.set_ylabel(f"log2 FC\nTSS crossed = {grp}", fontsize=8)
             if r_idx == 0:
                 ax.set_title(f"resolution={res}", fontsize=9, fontweight="bold")
             if r_idx == n_rows - 1:
@@ -565,7 +567,8 @@ def plot_overlay_fc(fc_df, output_name, Z=1.0, ylim=None):
     leg_kw = dict(fontsize=8, title_fontsize=8, frameon=True, handlelength=1.2)
     fig.legend(cond_handles, cond_labels, title="condition", loc="center left",
                bbox_to_anchor=(1.0, 0.5), **leg_kw)
-    fig.suptitle("log2 fold change relative to group crossing no boundaries",
+    fig.suptitle("log2 fold change of contact frequency\n" \
+                    "relative to group crossing no TSS",
                  fontsize=10)
     plt.tight_layout(rect=[0, 0, 1.0, 0.97])
     # plt.savefig(f"{output_name}.png", dpi=300, bbox_inches="tight")  # PNG disabled: SVG only

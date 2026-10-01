@@ -8,7 +8,7 @@
 mcool_dir:   resources/mcool_files
 results_dir: results
 
-# One or more TSS/PTU boundary BEDs. 
+# One or more TSS BEDs. 
 # Each key is a short tag used to namespace outputs.
 # the pipeline builds a full result set per entry in one run.
 tss_beds:
@@ -18,9 +18,9 @@ tss_beds:
 
 # --- analysis parameters ---
 resolutions: [1000, 2000, 5000]   # must exist in the .mcool zoom levels
-extend: 2000            # 0 = raw TSS boundaries; >0 = clamped (overlap-free) extension in bp
+extend: 2000            # 0 = raw TSS intervals; >0 = clamped (overlap-free) extension in bp
 min_regions: 3       # drop chromosomes with fewer inter-TSS regions than this
-max_group: 2         # number of explicit boundary-crossing groups: 
+max_group: 2         # number of explicit TSS-crossing groups: 
                      #   0..N kept, farther separations collapse into ">N". 
                      #   If the data never reaches N, no ">N" bucket appears (cap falls back to the largest separation present).
                      #   Set to null for no collapse (one group per separation).

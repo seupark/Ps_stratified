@@ -43,7 +43,7 @@ rule all:
         expand(os.path.join(RES_DIR, "plots/overlay_ps_{tss}.svg"),         tss=TSS_TAGS),
 
 
-# TSS boundaries -> inter-TSS regions (JSON)
+# TSS intervals -> inter-TSS regions (JSON)
 rule regions:
     input:
         tss_bed = lambda wc: TSS_BEDS[wc.tss],
@@ -122,7 +122,7 @@ rule plot_per_condition:
         "scripts/plot_per_condition.py"
 
 
-# log2FC with conditions overlaid, faceted by boundary group
+# log2FC with conditions overlaid, faceted by TSS crossing group
 rule plot_overlay_fc:
     input:
         fc = lambda wc: expand(
@@ -137,7 +137,7 @@ rule plot_overlay_fc:
         "scripts/plot_overlay_fc.py"
 
 
-# balanced-mean P(s) with conditions overlaid and boundary groups distinguished by line style
+# balanced-mean P(s) with conditions overlaid and TSS crossing groups distinguished by line style
 rule plot_overlay_ps:
     input:
         combined = lambda wc: expand(
